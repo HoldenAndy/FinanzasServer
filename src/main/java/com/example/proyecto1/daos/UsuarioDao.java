@@ -21,19 +21,23 @@ public class UsuarioDao{
         Usuario usuario = new Usuario();
         usuario.setId(rs.getLong("id"));
         usuario.setEmail(rs.getString("email"));
-        usuario.setNombre(rs.getString("email"));
+        usuario.setNombre(rs.getString("nombre"));
         usuario.setPassword(rs.getString("password"));
         usuario.setRole(Role.valueOf(rs.getString("role")));
+        usuario.setActivado(rs.getBoolean("activado"));
+        usuario.setCodigoVerificacion(rs.getString("codigo_verificacion"));
         return usuario;
     };
 
     public void save(Usuario usuario){
-        String sql = "INSERT INTO usuarios (email, password, nombre, role) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO usuarios (email, password, nombre, role, activado, codigo_verificacion) VALUES (?, ?, ?, ?, ?, ?)";
         jdbcTemplate.update(sql,
             usuario.getEmail(),
             usuario.getPassword(),
             usuario.getNombre(),
-            usuario.getRole().name());
+            usuario.getRole().name(),
+            usuario.isActivado(),
+            usuario.getCodigoVerificacion());
     }
 
     public Optional<Usuario> findByEmail(String email) {
@@ -43,5 +47,20 @@ public class UsuarioDao{
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
+    }
+
+    public Optional<Usuario> buscarPorCodigoVerificacion(String codigo){
+        String sql = "SELECT * FROM usuarios WHERE codigo_verificacion = ?";
+        try {
+            Usuario usuario = jdbcTemplate.queryForObject(sql, usuarioRowMapper, codigo);
+            return Optional.ofNullable(usuario);
+        }catch (EmptyResultDataAccessException e){
+            return Optional.empty();
+        }
+    }
+
+    public void ActivarUsuario(Long id){
+        String sql = "UPDATE usuarios SET activado = true, codigo_verificacion = NULL WHERE id = ?";
+        jdbcTemplate.update(sql, id);
     }
 }

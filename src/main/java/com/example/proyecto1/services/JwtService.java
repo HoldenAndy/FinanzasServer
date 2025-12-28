@@ -14,9 +14,9 @@
 
     @Service
     public class JwtService {
-        @Value("${jwt.secret}")
+        @Value("${spring.jwt.secret}")
         private String secretKey;
-        @Value("${jwt.expiration}")
+        @Value("${spring.jwt.expiration}")
         private String jwtExpiracion;
 
         private SecretKey key;

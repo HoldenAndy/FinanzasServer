@@ -14,16 +14,20 @@ public class Usuario implements UserDetails{
     private String password;
     private String nombre;
     private Role role;
+    private String codigoVerificacion;
+    private boolean activado;
 
     public Usuario() {
     }
 
-    public Usuario(Long id, String email, String password, String nombre, Role role) {
+    public Usuario(Long id, String email, String password, String nombre, Role role, String codigoVerificacion, boolean activado) {
         this.id = id;
         this.email = email;
         this.password = password;
         this.nombre = nombre;
         this.role = role;
+        this.codigoVerificacion = codigoVerificacion;
+        this.activado = activado;
     }
 
     public Long getId() {
@@ -42,8 +46,8 @@ public class Usuario implements UserDetails{
         this.email = email;
     }
 
-    public void setPassword(String pasasword) {
-        this.password = pasasword;
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public String getNombre() {
@@ -60,6 +64,22 @@ public class Usuario implements UserDetails{
 
     public void setRole(Role role) {
         this.role = role;
+    }
+
+    public String getCodigoVerificacion() {
+        return codigoVerificacion;
+    }
+
+    public void setCodigoVerificacion(String codigoVerificacion) {
+        this.codigoVerificacion = codigoVerificacion;
+    }
+
+    public boolean isActivado() {
+        return activado;
+    }
+
+    public void setActivado(boolean activado) {
+        this.activado = activado;
     }
 
     @Override
