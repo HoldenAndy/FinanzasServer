@@ -21,7 +21,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<String> registrar(@RequestBody RegisterPeticion request){
+    public ResponseEntity<String> registrarUsuario(@RequestBody RegisterPeticion request){
         try {
             authServices.registrar(request);
             Map<String, String> respuesta = new HashMap<>();
@@ -33,7 +33,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginPeticion loginPeticion){
+    public ResponseEntity<?> loguearUsuario(@RequestBody LoginPeticion loginPeticion){
         try {
             AuthResponse token = authServices.login(loginPeticion);
             return ResponseEntity.ok(token);
@@ -42,8 +42,8 @@ public class AuthController {
         }
     }
 
-    @GetMapping("/confirmar")
-    public  ResponseEntity<String> ActivarCuenta (@RequestParam("codigo") String codigo){
+    @GetMapping(value = "/confirmar", produces = "text/html;charset=UTF-8")
+    public  ResponseEntity<String> activarCuenta (@RequestParam("codigo") String codigo){
         boolean activado = authServices.activarCuenta(codigo);
 
         if(activado){
