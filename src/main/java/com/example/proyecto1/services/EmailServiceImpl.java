@@ -14,6 +14,7 @@ public class EmailServiceImpl implements EmailService{
         this.mailSender = mailSender;
     }
 
+    @Override
     public void enviarEmailConfirmacion(String emailDestino, String codigo) throws MessagingException {
         MimeMessage mensaje = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(mensaje, true, "UTF-8");

@@ -29,6 +29,7 @@ public class UsuarioDaoImpl implements UsuarioDao {
         return usuario;
     };
 
+    @Override
     public void save(Usuario usuario){
         String sql = "INSERT INTO usuarios (email, password, nombre, role, activado, codigo_verificacion) VALUES (?, ?, ?, ?, ?, ?)";
         jdbcTemplate.update(sql,
@@ -40,6 +41,7 @@ public class UsuarioDaoImpl implements UsuarioDao {
             usuario.getCodigoVerificacion());
     }
 
+    @Override
     public Optional<Usuario> findByEmail(String email) {
         String sql = "SELECT * FROM usuarios WHERE email = ?";
         try {
@@ -49,6 +51,7 @@ public class UsuarioDaoImpl implements UsuarioDao {
         }
     }
 
+    @Override
     public Optional<Usuario> buscarPorCodigoVerificacion(String codigo){
         String sql = "SELECT * FROM usuarios WHERE codigo_verificacion = ?";
         try {
@@ -59,6 +62,7 @@ public class UsuarioDaoImpl implements UsuarioDao {
         }
     }
 
+    @Override
     public void ActivarUsuario(Long id){
         String sql = "UPDATE usuarios SET activado = true, codigo_verificacion = NULL WHERE id = ?";
         jdbcTemplate.update(sql, id);

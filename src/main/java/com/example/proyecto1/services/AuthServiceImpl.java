@@ -28,12 +28,13 @@ public class AuthServiceImpl implements AuthService{
     }
 
 
+    @Override
     public void registrar(RegisterPeticion request){
         String codigo = UUID.randomUUID().toString();
         Usuario usuario = new Usuario();
-        usuario.setNombre(request.getNombre());
-        usuario.setEmail(request.getEmail());
-        String encodedPassword = passwordEncoder.encode(request.getPassword());
+        usuario.setNombre(request.nombre());
+        usuario.setEmail(request.email());
+        String encodedPassword = passwordEncoder.encode(request.password());
         usuario.setPassword(encodedPassword);
         usuario.setCodigoVerificacion(codigo);
         usuario.setActivado(false);
@@ -48,8 +49,9 @@ public class AuthServiceImpl implements AuthService{
 
     }
 
+    @Override
     public AuthResponse login (LoginPeticion request){
-        Usuario usuario = usuarioDao.findByEmail(request.getEmail()).orElseThrow(() ->
+        Usuario usuario = usuarioDao.findByEmail(request.email()).orElseThrow(() ->
             new RuntimeException("Credenciales invalidas."));
 
         if(!usuario.isActivado()){
@@ -57,7 +59,7 @@ public class AuthServiceImpl implements AuthService{
                     usuario.getEmail());
         }
 
-        if(!passwordEncoder.matches(request.getPassword(), usuario.getPassword())){
+        if(!passwordEncoder.matches(request.password(), usuario.getPassword())){
             throw new RuntimeException("Credenciales inválidas");
         }
 
@@ -65,6 +67,7 @@ public class AuthServiceImpl implements AuthService{
         return new AuthResponse(token);
     }
 
+    @Override
     public boolean activarCuenta(String codigo){
         Optional<Usuario> usuarioVerificado = usuarioDao.buscarPorCodigoVerificacion(codigo);
 
@@ -75,5 +78,4 @@ public class AuthServiceImpl implements AuthService{
         }
         return false;
     }
-
 }
