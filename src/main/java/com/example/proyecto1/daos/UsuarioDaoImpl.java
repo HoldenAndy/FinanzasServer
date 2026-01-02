@@ -5,8 +5,12 @@ import com.example.proyecto1.models.entities.Usuario;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
+import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.util.Optional;
 
 @Repository
@@ -30,15 +34,24 @@ public class UsuarioDaoImpl implements UsuarioDao {
     };
 
     @Override
-    public void save(Usuario usuario){
+    public Long insertarUsuario(Usuario usuario) {
         String sql = "INSERT INTO usuarios (email, password, nombre, role, activado, codigo_verificacion) VALUES (?, ?, ?, ?, ?, ?)";
-        jdbcTemplate.update(sql,
-            usuario.getEmail(),
-            usuario.getPassword(),
-            usuario.getNombre(),
-            usuario.getRole().name(),
-            usuario.isActivado(),
-            usuario.getCodigoVerificacion());
+
+        // Objeto para atrapar el ID autoincremental
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, usuario.getEmail());
+            ps.setString(2, usuario.getPassword());
+            ps.setString(3, usuario.getNombre());
+            ps.setString(4, usuario.getRole().name());
+            ps.setBoolean(5, usuario.isActivado());
+            ps.setString(6, usuario.getCodigoVerificacion());
+            return ps;
+        }, keyHolder);
+
+        return keyHolder.getKey() != null ? keyHolder.getKey().longValue() : null;
     }
 
     @Override
