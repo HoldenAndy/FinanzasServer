@@ -1,5 +1,6 @@
 package com.example.proyecto1.services;
 
+import com.example.proyecto1.daos.CategoriaDao;
 import com.example.proyecto1.daos.UsuarioDao;
 import com.example.proyecto1.models.dtos.AuthResponse;
 import com.example.proyecto1.models.dtos.LoginPeticion;
@@ -7,6 +8,7 @@ import com.example.proyecto1.models.dtos.RegisterPeticion;
 import com.example.proyecto1.models.entities.Role;
 import com.example.proyecto1.models.entities.Usuario;
 import jakarta.mail.MessagingException;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -16,19 +18,21 @@ import java.util.UUID;
 @Service
 public class AuthServiceImpl implements AuthService{
     private final UsuarioDao usuarioDao;
+    private final CategoriaDao categoriaDao; // 2. Definimos la dependencia
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final EmailService emailService;
 
-    public AuthServiceImpl(UsuarioDao usuarioDao, PasswordEncoder passwordEncoder, JwtService jwtService, EmailService emailService) {
+    public AuthServiceImpl(UsuarioDao usuarioDao, CategoriaDao categoriaDao, PasswordEncoder passwordEncoder, JwtService jwtService, EmailService emailService) {
         this.usuarioDao = usuarioDao;
+        this.categoriaDao = categoriaDao;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.emailService = emailService;
     }
 
-
     @Override
+    @Transactional
     public void registrar(RegisterPeticion request){
         String codigo = UUID.randomUUID().toString();
         Usuario usuario = new Usuario();
@@ -39,7 +43,8 @@ public class AuthServiceImpl implements AuthService{
         usuario.setCodigoVerificacion(codigo);
         usuario.setActivado(false);
         usuario.setRole(Role.USER);
-        usuarioDao.save(usuario);
+        Long usuarioId = usuarioDao.insertarUsuario(usuario);
+        categoriaDao.insertarCategoriasPorDefecto(usuarioId);
 
         try {
             emailService.enviarEmailConfirmacion(usuario.getEmail(), codigo);
@@ -50,6 +55,7 @@ public class AuthServiceImpl implements AuthService{
     }
 
     @Override
+    @Transactional
     public AuthResponse login (LoginPeticion request){
         Usuario usuario = usuarioDao.findByEmail(request.email()).orElseThrow(() ->
             new RuntimeException("Credenciales invalidas."));
@@ -68,6 +74,7 @@ public class AuthServiceImpl implements AuthService{
     }
 
     @Override
+    @Transactional
     public boolean activarCuenta(String codigo){
         Optional<Usuario> usuarioVerificado = usuarioDao.buscarPorCodigoVerificacion(codigo);
 
