@@ -5,6 +5,7 @@ import jakarta.mail.internet.MimeMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class EmailServiceImpl implements EmailService{
@@ -15,6 +16,7 @@ public class EmailServiceImpl implements EmailService{
     }
 
     @Override
+    @Transactional
     public void enviarEmailConfirmacion(String emailDestino, String codigo) throws MessagingException {
         MimeMessage mensaje = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(mensaje, true, "UTF-8");
