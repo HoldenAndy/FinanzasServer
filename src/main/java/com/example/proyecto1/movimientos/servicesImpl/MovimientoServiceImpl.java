@@ -2,6 +2,7 @@ package com.example.proyecto1.movimientos.servicesImpl;
 
 import com.example.proyecto1.currencies.services.CurrencyService;
 import com.example.proyecto1.movimientos.daos.MovimientoDao;
+import com.example.proyecto1.movimientos.dtos.PaginacionMovimientos;
 import com.example.proyecto1.movimientos.services.MovimientoService;
 import com.example.proyecto1.usuarios.daos.UsuarioDao;
 import com.example.proyecto1.movimientos.dtos.MovimientoPeticion;
@@ -13,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Service
@@ -51,11 +51,12 @@ public class MovimientoServiceImpl implements MovimientoService {
     }
 
     @Override
-    @Transactional(readOnly=true)
-    public List<Movimiento> listarMisMovimientos(String emailUsuario) {
+    @Transactional(readOnly = true)
+    public PaginacionMovimientos<Movimiento> listarMisMovimientos(String emailUsuario, LocalDate fechaInicio, LocalDate fechaFin, int pagina, int tamanio) {
         Usuario usuario = usuarioDao.findByEmail(emailUsuario)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-        return movimientoDao.findAllByUsuarioId(usuario.getId());
+        return movimientoDao.findAllByUsuarioId(usuario.getId(), fechaInicio, fechaFin,
+                pagina, tamanio);
     }
 
     @Override
@@ -72,4 +73,58 @@ public class MovimientoServiceImpl implements MovimientoService {
 
         return resumen;
     }
+
+    @Override
+    @Transactional
+    public void editarMovimiento(Long id, MovimientoPeticion peticion, String emailUsuario) {
+        Usuario usuario = usuarioDao.findByEmail(emailUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        Movimiento movimiento = movimientoDao.findById(id)
+                .orElseThrow(() -> new RuntimeException("Movimiento no encontrado"));
+
+        if (!movimiento.getUsuarioId().equals(usuario.getId())) {
+            throw new RuntimeException("¡Acceso Denegado! No puedes editar movimientos de otro usuario.");
+        }
+
+        movimiento.setDescripcion(peticion.descripcion());
+        movimiento.setFecha(peticion.fecha());
+        movimiento.setCategoriaId(peticion.categoriaId());
+        movimiento.setTipo(peticion.tipo());
+
+        boolean cambioMonto = movimiento.getMonto().compareTo(peticion.monto()) != 0;
+        boolean cambioMoneda = !movimiento.getMoneda().name().equals(peticion.moneda());
+
+        if (cambioMonto || cambioMoneda) {
+            movimiento.setMonto(peticion.monto());
+            movimiento.setMoneda(peticion.moneda());
+
+            BigDecimal nuevoMontoBase = currencyService.convertir(
+                    peticion.monto(),
+                    peticion.moneda(),
+                    monedaBase
+            );
+            movimiento.setMontoBase(nuevoMontoBase);
+        }
+
+        movimientoDao.actualizarMovimiento(movimiento);
+    }
+
+    @Override
+    @Transactional
+    public void eliminarMovimiento(Long id, String emailUsuario) {
+        Usuario usuario = usuarioDao.findByEmail(emailUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        Movimiento movimiento = movimientoDao.findById(id)
+                .orElseThrow(() -> new RuntimeException("Movimiento no encontrado"));
+
+        // SECURITY CHECK
+        if (!movimiento.getUsuarioId().equals(usuario.getId())) {
+            throw new RuntimeException("No puedes eliminar este movimiento.");
+        }
+
+        movimientoDao.eliminarMovimiento(id);
+    }
+
 }

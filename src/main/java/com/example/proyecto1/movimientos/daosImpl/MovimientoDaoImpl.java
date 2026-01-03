@@ -1,15 +1,20 @@
 package com.example.proyecto1.movimientos.daosImpl;
 
+import com.example.proyecto1.movimientos.dtos.PaginacionMovimientos;
 import com.example.proyecto1.movimientos.entities.Moneda;
 import com.example.proyecto1.movimientos.entities.Movimiento;
 import com.example.proyecto1.movimientos.entities.TipoMovimiento;
 import com.example.proyecto1.movimientos.daos.MovimientoDao;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class MovimientoDaoImpl implements MovimientoDao {
@@ -53,13 +58,40 @@ public class MovimientoDaoImpl implements MovimientoDao {
     }
 
     @Override
-    public List<Movimiento> findAllByUsuarioId(Long usuarioId) {
-        String sql = "SELECT m.*, c.nombre as nombre_categoria " +
-                "FROM movimientos m " +
-                "INNER JOIN categorias c ON m.categoria_id = c.id " +
-                "WHERE m.usuario_id = ? " +
-                "ORDER BY m.fecha DESC";
-        return jdbcTemplate.query(sql, movimientoRowMapper, usuarioId);
+    public PaginacionMovimientos<Movimiento> findAllByUsuarioId(Long usuarioId, LocalDate fechaInicio, LocalDate fechaFin, int pagina, int tamanio) {
+        StringBuilder sqlBase = new StringBuilder(" FROM movimientos m INNER JOIN categorias c ON m.categoria_id = c.id WHERE m.usuario_id = ? ");
+        List<Object> params = new ArrayList<>();
+        params.add(usuarioId);
+
+        if (fechaInicio != null) {
+            sqlBase.append(" AND m.fecha >= ? ");
+            params.add(fechaInicio);
+        }
+        if (fechaFin != null) {
+            sqlBase.append(" AND m.fecha <= ? ");
+            params.add(fechaFin);
+        }
+
+        String sqlCount = "SELECT count(*) " + sqlBase.toString();
+        Long totalElementos = jdbcTemplate.queryForObject(sqlCount, Long.class, params.toArray());
+        sqlBase.append(" ORDER BY m.fecha DESC LIMIT ? OFFSET ?");
+        params.add(tamanio);
+        params.add(pagina * tamanio);
+        String sqlData = "SELECT m.*, c.nombre as nombre_categoria " + sqlBase.toString();
+
+        List<Movimiento> movimientos = jdbcTemplate.query(
+                sqlData,
+                movimientoRowMapper,
+                params.toArray()
+        );
+        int totalPaginas = (int) Math.ceil((double) totalElementos / tamanio);
+        return new PaginacionMovimientos<>(
+                movimientos,
+                pagina,
+                tamanio,
+                totalElementos,
+                totalPaginas
+        );
     }
 
     @Override
@@ -67,4 +99,43 @@ public class MovimientoDaoImpl implements MovimientoDao {
         String sql = "SELECT fun_calcular_saldo(?)";
         return jdbcTemplate.queryForObject(sql, BigDecimal.class, usuarioId);
     }
+
+    @Override
+    public Optional<Movimiento> findById(Long id) {
+        String sql = "SELECT m.*, c.nombre as nombre_categoria " +
+                "FROM movimientos m " +
+                "INNER JOIN categorias c ON m.categoria_id = c.id " +
+                "WHERE m.id = ?";
+        try {
+            Movimiento mov = jdbcTemplate.queryForObject(sql, movimientoRowMapper, id);
+            return Optional.ofNullable(mov);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public void actualizarMovimiento(Movimiento mov) {
+        String sql = "UPDATE movimientos SET categoria_id = ?, monto = ?, moneda = ?, " +
+                "monto_base = ?, descripcion = ?, tipo = ?, fecha = ? WHERE id = ?";
+
+        jdbcTemplate.update(sql,
+                mov.getCategoriaId(),
+                mov.getMonto(),
+                mov.getMoneda().name(),
+                mov.getMontoBase(),
+                mov.getDescripcion(),
+                mov.getTipo().name(),
+                mov.getFecha(),
+                mov.getId()
+        );
+    }
+
+    @Override
+    public void eliminarMovimiento(Long id) {
+        String sql = "DELETE FROM movimientos WHERE id = ?";
+        jdbcTemplate.update(sql, id);
+    }
+
+
 }
