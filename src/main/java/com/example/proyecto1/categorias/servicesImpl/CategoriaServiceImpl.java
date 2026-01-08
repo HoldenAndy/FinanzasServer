@@ -15,23 +15,23 @@ import java.util.List;
 @Service
 public class CategoriaServiceImpl implements CategoriaService {
     private final CategoriaDao categoriaDao;
-    private final UsuarioDao usuarioDao; // Para buscar el ID por email
+    private final UsuarioDao usuarioDao;
 
     public CategoriaServiceImpl(CategoriaDao categoriaDao, UsuarioDao usuarioDao) {
         this.categoriaDao = categoriaDao;
         this.usuarioDao = usuarioDao;
     }
 
-    @Transactional(readOnly = true)
     @Override
+    @Transactional(readOnly = true)
     public List<Categoria> listarCategorias(String emailUsuario) {
         Usuario usuario = usuarioDao.findByEmail(emailUsuario)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
         return categoriaDao.findAllByUsuarioId(usuario.getId());
     }
 
-    @Transactional
     @Override
+    @Transactional
     public void crearCategoria(CategoriaPeticion peticion, String emailUsuario) {
         Usuario usuario = usuarioDao.findByEmail(emailUsuario)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
@@ -43,8 +43,8 @@ public class CategoriaServiceImpl implements CategoriaService {
         categoriaDao.crearCategoria(nuevaCategoria);
     }
 
-    @Transactional
     @Override
+    @Transactional
     public void editarCategoria(Long id, CategoriaPeticion peticion, String emailUsuario) {
         Categoria categoria = categoriaDao.findById(id)
                 .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
@@ -54,15 +54,14 @@ public class CategoriaServiceImpl implements CategoriaService {
             throw new RuntimeException("No tienes permiso para editar esta categoría");
         }
 
-        // 3. Actualizamos los datos
         categoria.setNombre(peticion.nombre());
         categoria.setTipo(peticion.tipo());
 
         categoriaDao.actualizarCategoria(categoria);
     }
 
-    @Transactional
     @Override
+    @Transactional
     public void eliminarCategoria(Long id, String emailUsuario) {
         Categoria categoria = categoriaDao.findById(id)
                 .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
