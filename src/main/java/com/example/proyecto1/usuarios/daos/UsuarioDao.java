@@ -9,4 +9,5 @@ public interface UsuarioDao {
     Optional<Usuario> findByEmail(String email);
     Optional<Usuario> buscarPorCodigoVerificacion(String codigo);
     void ActivarUsuario(Long id);
+    void actualizarUsuario(Usuario usuario);
 }

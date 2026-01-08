@@ -22,14 +22,26 @@ public class CategoriaServiceImpl implements CategoriaService {
         this.usuarioDao = usuarioDao;
     }
 
+    // ✅ CORREGIDO: Usamos esta versión que convierte las Entidades a DTOs (Records)
     @Override
     @Transactional(readOnly = true)
-    public List<Categoria> listarCategorias(String emailUsuario) {
-        Usuario usuario = usuarioDao.findByEmail(emailUsuario)
+    public List<CategoriaRespuesta> listarPorUsuario(String email) {
+        Usuario usuario = usuarioDao.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-        return categoriaDao.findAllByUsuarioId(usuario.getId());
+
+        List<Categoria> categoriasEntity = categoriaDao.findAllByUsuarioId(usuario.getId());
+
+        // Mapeamos de Entidad -> DTO para devolver lo que pide el Controlador
+        return categoriasEntity.stream()
+                .map(cat -> new CategoriaRespuesta(
+                        cat.getId(),
+                        cat.getNombre(),
+                        cat.getTipo()
+                ))
+                .toList();
     }
 
+    // ✅ RESCATADO: Tus métodos para Crear, Editar y Eliminar
     @Override
     @Transactional
     public void crearCategoria(CategoriaPeticion peticion, String emailUsuario) {
@@ -49,7 +61,10 @@ public class CategoriaServiceImpl implements CategoriaService {
         Categoria categoria = categoriaDao.findById(id)
                 .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
 
-        Usuario usuario = usuarioDao.findByEmail(emailUsuario).get();
+        Usuario usuario = usuarioDao.findByEmail(emailUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // Validación de seguridad: solo el dueño puede editar
         if (!categoria.getUsuarioId().equals(usuario.getId())) {
             throw new RuntimeException("No tienes permiso para editar esta categoría");
         }
@@ -66,7 +81,10 @@ public class CategoriaServiceImpl implements CategoriaService {
         Categoria categoria = categoriaDao.findById(id)
                 .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
 
-        Usuario usuario = usuarioDao.findByEmail(emailUsuario).get();
+        Usuario usuario = usuarioDao.findByEmail(emailUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // Validación de seguridad: solo el dueño puede eliminar
         if (!categoria.getUsuarioId().equals(usuario.getId())) {
             throw new RuntimeException("No tienes permiso para eliminar esta categoría");
         }

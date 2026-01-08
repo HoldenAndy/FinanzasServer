@@ -81,4 +81,13 @@ public class UsuarioDaoImpl implements UsuarioDao {
         String sql = "UPDATE usuarios SET activado = true, codigo_verificacion = NULL WHERE id = ?";
         jdbcTemplate.update(sql, id);
     }
+    @Override
+    public void actualizarUsuario(Usuario usuario) {
+        String sql = "UPDATE usuarios SET nombre = ?, password = ? WHERE id = ?";
+        jdbcTemplate.update(sql,
+                usuario.getNombre(),
+                usuario.getPassword(),
+                usuario.getId()
+        );
+    }
 }
