@@ -1,11 +1,11 @@
 package com.example.proyecto1.categorias.controller;
 
+import com.example.proyecto1.categorias.dtos.CategoriaPeticion;
 import com.example.proyecto1.categorias.dtos.CategoriaRespuesta;
+import com.example.proyecto1.categorias.entities.Categoria;
 import com.example.proyecto1.categorias.services.CategoriaService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.List;
@@ -21,8 +21,26 @@ public class CategoriaController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CategoriaRespuesta>> listarMisCategorias(Principal principal) {
-        List<CategoriaRespuesta> categorias = categoriaService.listarPorUsuario(principal.getName());
-        return ResponseEntity.ok(categorias);
+    public ResponseEntity<List<Categoria>> listarCategoria(Principal principal) {
+        return ResponseEntity.ok(categoriaService.listarCategorias(principal.getName()));
+    }
+
+    @PostMapping
+    public ResponseEntity<Void> crearCategoria(@RequestBody CategoriaPeticion peticion, Principal principal) {
+        categoriaService.crearCategoria(peticion, principal.getName());
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Void> editarCategoria(@PathVariable Long id, @RequestBody CategoriaPeticion peticion, Principal principal) {
+        categoriaService.editarCategoria(id, peticion, principal.getName());
+        return ResponseEntity.ok().build();
+    }
+
+    // 4. Eliminar una categoría
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminarCategoria(@PathVariable Long id, Principal principal) {
+        categoriaService.eliminarCategoria(id, principal.getName());
+        return ResponseEntity.ok().build();
     }
 }
