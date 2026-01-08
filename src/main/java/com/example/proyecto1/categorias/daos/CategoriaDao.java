@@ -1,5 +1,6 @@
 package com.example.proyecto1.categorias.daos;
 
+import com.example.proyecto1.categorias.dtos.CategoriaPeticion;
 import com.example.proyecto1.categorias.entities.Categoria;
 
 import java.util.List;

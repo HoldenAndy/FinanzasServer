@@ -12,6 +12,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/categorias")
+
 public class CategoriaController {
 
     private final CategoriaService categoriaService;
@@ -37,7 +38,6 @@ public class CategoriaController {
         return ResponseEntity.ok().build();
     }
 
-    // 4. Eliminar una categoría
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarCategoria(@PathVariable Long id, Principal principal) {
         categoriaService.eliminarCategoria(id, principal.getName());

@@ -1,6 +1,7 @@
 package com.example.proyecto1.categorias.servicesImpl;
 
 import com.example.proyecto1.categorias.daos.CategoriaDao;
+import com.example.proyecto1.categorias.dtos.CategoriaPeticion;
 import com.example.proyecto1.categorias.services.CategoriaService;
 import com.example.proyecto1.usuarios.daos.UsuarioDao;
 import com.example.proyecto1.categorias.dtos.CategoriaRespuesta;
@@ -21,31 +22,16 @@ public class CategoriaServiceImpl implements CategoriaService {
         this.usuarioDao = usuarioDao;
     }
 
-    @Override
-    public List<CategoriaRespuesta> listarPorUsuario(String email) {
-        return List.of();
-    }
-
-    @Override
     @Transactional(readOnly = true)
-    public List<CategoriaRespuesta> listarPorUsuario(String email) {
-        Usuario usuario = usuarioDao.findByEmail(email)
+    @Override
+    public List<Categoria> listarCategorias(String emailUsuario) {
+        Usuario usuario = usuarioDao.findByEmail(emailUsuario)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-<<<<<<< Updated upstream
-        List<Categoria> categoriasEntity = categoriaDao.findAllByUsuarioId(usuario.getId());
-        return categoriasEntity.stream()
-                .map(cat -> new CategoriaRespuesta(
-                        cat.getId(),
-                        cat.getNombre(),
-                        cat.getTipo()
-                ))
-                .toList();
-=======
         return categoriaDao.findAllByUsuarioId(usuario.getId());
     }
 
-    @Override
     @Transactional
+    @Override
     public void crearCategoria(CategoriaPeticion peticion, String emailUsuario) {
         Usuario usuario = usuarioDao.findByEmail(emailUsuario)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
@@ -57,8 +43,8 @@ public class CategoriaServiceImpl implements CategoriaService {
         categoriaDao.crearCategoria(nuevaCategoria);
     }
 
-    @Override
     @Transactional
+    @Override
     public void editarCategoria(Long id, CategoriaPeticion peticion, String emailUsuario) {
         Categoria categoria = categoriaDao.findById(id)
                 .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
@@ -75,8 +61,8 @@ public class CategoriaServiceImpl implements CategoriaService {
         categoriaDao.actualizarCategoria(categoria);
     }
 
-    @Override
     @Transactional
+    @Override
     public void eliminarCategoria(Long id, String emailUsuario) {
         Categoria categoria = categoriaDao.findById(id)
                 .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
@@ -87,6 +73,5 @@ public class CategoriaServiceImpl implements CategoriaService {
         }
 
         categoriaDao.eliminarCategoria(id);
->>>>>>> Stashed changes
     }
 }

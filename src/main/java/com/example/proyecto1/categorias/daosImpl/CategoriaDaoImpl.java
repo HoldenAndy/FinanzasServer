@@ -56,12 +56,6 @@ public class CategoriaDaoImpl implements CategoriaDao {
     }
 
     @Override
-    public List<Categoria> findAllByUsuarioId(Long usuarioId) {
-        String sql = "SELECT * FROM categorias WHERE usuario_id = ?";
-        return jdbcTemplate.query(sql, rowMapper, usuarioId);
-    }
-
-    @Override
     public void crearCategoria(Categoria categoria) {
         String sql = "INSERT INTO categorias (nombre, tipo, usuario_id) VALUES (?, ?, ?)";
         jdbcTemplate.update(sql,
@@ -85,6 +79,12 @@ public class CategoriaDaoImpl implements CategoriaDao {
     public void eliminarCategoria(Long id) {
         String sql = "DELETE FROM categorias WHERE id = ?";
         jdbcTemplate.update(sql, id);
+    }
+
+    @Override
+    public List<Categoria> findAllByUsuarioId(Long usuarioId) {
+        String sql = "SELECT * FROM categorias WHERE usuario_id = ?";
+        return jdbcTemplate.query(sql, rowMapper, usuarioId);
     }
 
     @Override
