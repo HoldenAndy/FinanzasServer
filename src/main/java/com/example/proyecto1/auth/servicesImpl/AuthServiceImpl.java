@@ -1,19 +1,21 @@
 package com.example.proyecto1.auth.servicesImpl;
 
+import com.example.proyecto1.auth.dtos.*;
 import com.example.proyecto1.auth.services.AuthService;
 import com.example.proyecto1.categorias.daos.CategoriaDao;
 import com.example.proyecto1.email.services.EmailService;
 import com.example.proyecto1.jwt.services.JwtService;
 import com.example.proyecto1.usuarios.daos.UsuarioDao;
-import com.example.proyecto1.auth.dtos.AuthResponse;
-import com.example.proyecto1.auth.dtos.LoginPeticion;
-import com.example.proyecto1.auth.dtos.RegisterPeticion;
 import com.example.proyecto1.usuarios.entities.Role;
 import com.example.proyecto1.usuarios.entities.Usuario;
 import jakarta.mail.MessagingException;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -88,4 +90,39 @@ public class AuthServiceImpl implements AuthService {
         }
         return false;
     }
+    @Override
+    public UsuarioResponse obtenerUsuario(String email){
+        var usuario = usuarioDao.findByEmail(email).orElseThrow(() ->
+                new RuntimeException("Usuario no encontrado"));
+        return new UsuarioResponse(
+                usuario.getId(),
+                usuario.getNombre(),
+                usuario.getEmail(),
+                usuario.getRole().toString()
+        );
+
+    }
+
+    @Override
+    @Transactional
+    public UsuarioResponse actualizarPerfil(String email, ActualizarUsuarioPeticion peticion) {
+
+        Usuario usuario = usuarioDao.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        usuario.setNombre(peticion.nombre());
+        if (peticion.password() != null && !peticion.password().isBlank()) {
+            String passwordHash = passwordEncoder.encode(peticion.password());
+            usuario.setPassword(passwordHash);
+        }
+
+        usuarioDao.actualizarUsuario(usuario);
+        return new UsuarioResponse(
+                usuario.getId(),
+                usuario.getNombre(),
+                usuario.getEmail(),
+                usuario.getRole().toString()
+        );
+    }
+
 }
+

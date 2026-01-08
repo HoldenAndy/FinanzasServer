@@ -1,9 +1,8 @@
 package com.example.proyecto1.auth.controller;
 
-import com.example.proyecto1.auth.dtos.AuthResponse;
-import com.example.proyecto1.auth.dtos.LoginPeticion;
-import com.example.proyecto1.auth.dtos.RegisterPeticion;
+import com.example.proyecto1.auth.dtos.*;
 import com.example.proyecto1.auth.services.AuthService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,7 +20,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<String> registrarUsuario(@RequestBody RegisterPeticion request){
+    public ResponseEntity<String> registrarUsuario(@Valid @RequestBody RegisterPeticion request){
         try {
             authServices.registrar(request);
             Map<String, String> respuesta = new HashMap<>();
@@ -33,7 +32,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> loguearUsuario(@RequestBody LoginPeticion loginPeticion){
+    public ResponseEntity<?> loguearUsuario(@Valid @RequestBody LoginPeticion loginPeticion){
         try {
             AuthResponse token = authServices.login(loginPeticion);
             return ResponseEntity.ok(token);
@@ -51,5 +50,17 @@ public class AuthController {
         }else {
             return ResponseEntity.badRequest().body("<h1>Error</h1><p>El código de activación es inválido o ya fue usado.</p>");
         }
+    }
+    @GetMapping("/me")
+    public ResponseEntity<UsuarioResponse> obtenerPerfil(){
+        String email = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+
+        return ResponseEntity.ok(authServices.obtenerUsuario(email));
+    }
+    @PutMapping("/me")
+    public ResponseEntity<UsuarioResponse> actualizarPerfil(@Valid @RequestBody ActualizarUsuarioPeticion request){
+        String email = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+
+        return ResponseEntity.ok(authServices.actualizarPerfil(email, request));
     }
 }

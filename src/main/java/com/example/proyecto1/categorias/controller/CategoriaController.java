@@ -2,8 +2,8 @@ package com.example.proyecto1.categorias.controller;
 
 import com.example.proyecto1.categorias.dtos.CategoriaPeticion;
 import com.example.proyecto1.categorias.dtos.CategoriaRespuesta;
-import com.example.proyecto1.categorias.entities.Categoria;
 import com.example.proyecto1.categorias.services.CategoriaService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,12 +21,12 @@ public class CategoriaController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Categoria>> listarCategoria(Principal principal) {
-        return ResponseEntity.ok(categoriaService.listarCategorias(principal.getName()));
+    public ResponseEntity<List<CategoriaRespuesta>> listarCategoria(Principal principal) {
+        return ResponseEntity.ok(categoriaService.listarPorUsuario(principal.getName()));
     }
 
     @PostMapping
-    public ResponseEntity<Void> crearCategoria(@RequestBody CategoriaPeticion peticion, Principal principal) {
+    public ResponseEntity<Void> crearCategoria(@Valid @RequestBody CategoriaPeticion peticion, Principal principal) {
         categoriaService.crearCategoria(peticion, principal.getName());
         return ResponseEntity.ok().build();
     }
