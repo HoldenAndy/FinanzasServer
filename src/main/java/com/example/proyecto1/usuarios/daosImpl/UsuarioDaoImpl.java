@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.PreparedStatement;
 import java.sql.Statement;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Repository
@@ -31,6 +32,11 @@ public class UsuarioDaoImpl implements UsuarioDao {
         usuario.setRole(Role.valueOf(rs.getString("role")));
         usuario.setActivado(rs.getBoolean("activado"));
         usuario.setCodigoVerificacion(rs.getString("codigo_verificacion"));
+        usuario.setTokenRecuperacionPassword(rs.getString("token_recuperacion"));
+        java.sql.Timestamp fechaExpiracion = rs.getTimestamp("token_expiracion");
+        if (fechaExpiracion != null) {
+            usuario.setTokenExpiracionPassword(fechaExpiracion.toLocalDateTime());
+        }
         return usuario;
     };
 
@@ -89,5 +95,28 @@ public class UsuarioDaoImpl implements UsuarioDao {
                 usuario.getPassword(),
                 usuario.getId()
         );
+    }
+
+    @Override
+    public void actualizarPassword(Long usuarioId, String nuevaPasswordEncriptada) {
+        String sql = "UPDATE usuarios SET password = ? WHERE id = ?";
+        jdbcTemplate.update(sql, nuevaPasswordEncriptada, usuarioId);
+    }
+
+    @Override
+    public void guardarTokenRecuperacion(String email, String token, LocalDateTime expiracion) {
+        String sql = "UPDATE usuarios SET token_recuperacion = ?, token_expiracion = ? WHERE email = ?";
+        jdbcTemplate.update(sql, token, expiracion, email);
+    }
+
+    @Override
+    public Optional<Usuario> findByTokenRecuperacion(String token) {
+        String sql = "SELECT * FROM usuarios WHERE token_recuperacion = ?";
+        try {
+            Usuario u = jdbcTemplate.queryForObject(sql, usuarioRowMapper, token);
+            return Optional.ofNullable(u);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
     }
 }

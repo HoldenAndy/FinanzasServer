@@ -23,7 +23,7 @@ import java.util.UUID;
 @Service
 public class AuthServiceImpl implements AuthService {
     private final UsuarioDao usuarioDao;
-    private final CategoriaDao categoriaDao; // 2. Definimos la dependencia
+    private final CategoriaDao categoriaDao;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final EmailService emailService;
@@ -89,39 +89,6 @@ public class AuthServiceImpl implements AuthService {
             return true;
         }
         return false;
-    }
-    @Override
-    public UsuarioResponse obtenerUsuario(String email){
-        var usuario = usuarioDao.findByEmail(email).orElseThrow(() ->
-                new RuntimeException("Usuario no encontrado"));
-        return new UsuarioResponse(
-                usuario.getId(),
-                usuario.getNombre(),
-                usuario.getEmail(),
-                usuario.getRole().toString()
-        );
-
-    }
-
-    @Override
-    @Transactional
-    public UsuarioResponse actualizarPerfil(String email, ActualizarUsuarioPeticion peticion) {
-
-        Usuario usuario = usuarioDao.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-        usuario.setNombre(peticion.nombre());
-        if (peticion.password() != null && !peticion.password().isBlank()) {
-            String passwordHash = passwordEncoder.encode(peticion.password());
-            usuario.setPassword(passwordHash);
-        }
-
-        usuarioDao.actualizarUsuario(usuario);
-        return new UsuarioResponse(
-                usuario.getId(),
-                usuario.getNombre(),
-                usuario.getEmail(),
-                usuario.getRole().toString()
-        );
     }
 
 }

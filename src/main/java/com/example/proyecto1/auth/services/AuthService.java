@@ -6,6 +6,4 @@ public interface AuthService {
     void registrar(RegisterPeticion request);
     public AuthResponse login (LoginPeticion request);
     public boolean activarCuenta(String codigo);
-    UsuarioResponse obtenerUsuario(String email);
-    UsuarioResponse actualizarPerfil(String email, ActualizarUsuarioPeticion peticion);
 }

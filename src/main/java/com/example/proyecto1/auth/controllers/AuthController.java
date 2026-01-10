@@ -1,7 +1,10 @@
-package com.example.proyecto1.auth.controller;
+package com.example.proyecto1.auth.controllers;
 
 import com.example.proyecto1.auth.dtos.*;
 import com.example.proyecto1.auth.services.AuthService;
+import com.example.proyecto1.usuarios.dtos.RestablecerPasswordPeticion;
+import com.example.proyecto1.usuarios.dtos.SolicitarRecuperacionPeticion;
+import com.example.proyecto1.usuarios.services.UsuarioService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,9 +17,11 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authServices;
+    private final UsuarioService usuarioService;
 
-    public AuthController(AuthService authServices) {
+    public AuthController(AuthService authServices, UsuarioService usuarioService) {
         this.authServices = authServices;
+        this.usuarioService = usuarioService;
     }
 
     @PostMapping("/register")
@@ -51,16 +56,16 @@ public class AuthController {
             return ResponseEntity.badRequest().body("<h1>Error</h1><p>El código de activación es inválido o ya fue usado.</p>");
         }
     }
-    @GetMapping("/me")
-    public ResponseEntity<UsuarioResponse> obtenerPerfil(){
-        String email = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
 
-        return ResponseEntity.ok(authServices.obtenerUsuario(email));
+    @PostMapping("/solicitar-recuperacion")
+    public ResponseEntity<String> solicitarRecuperacion(@RequestBody SolicitarRecuperacionPeticion peticion) {
+        usuarioService.solicitarRecuperacion(peticion.email());
+        return ResponseEntity.ok("Te hemos enviado instrucciones al correo, por favor revisalo.");
     }
-    @PutMapping("/me")
-    public ResponseEntity<UsuarioResponse> actualizarPerfil(@Valid @RequestBody ActualizarUsuarioPeticion request){
-        String email = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
 
-        return ResponseEntity.ok(authServices.actualizarPerfil(email, request));
+    @PostMapping("/restablecer-password")
+    public ResponseEntity<String> restablecerPassword(@RequestBody RestablecerPasswordPeticion peticion) {
+        usuarioService.restablecerPassword(peticion.token(), peticion.nuevaPassword());
+        return ResponseEntity.ok("Contraseña restablecida con éxito. Ya puedes iniciar sesión.");
     }
 }
