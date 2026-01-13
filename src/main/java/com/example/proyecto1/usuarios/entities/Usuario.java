@@ -19,12 +19,14 @@ public class Usuario implements UserDetails{
     private boolean activado;
     private String tokenRecuperacionPassword;
     private LocalDateTime tokenExpiracionPassword;
+    private LocalDateTime codigoVerificacionExpiracion;
 
     public Usuario() {
     }
 
     public Usuario(Long id, String email, String password, String nombre, Role role, String codigoVerificacion,
-                   boolean activado, String tokenRecuperacionPassword, LocalDateTime tokenExpiracionPassword) {
+                   boolean activado, String tokenRecuperacionPassword, LocalDateTime tokenExpiracionPassword,
+                   LocalDateTime codigoVerificacionExpiracion) {
         this.id = id;
         this.email = email;
         this.password = password;
@@ -34,6 +36,7 @@ public class Usuario implements UserDetails{
         this.activado = activado;
         this.tokenRecuperacionPassword = tokenRecuperacionPassword;
         this.tokenExpiracionPassword = tokenExpiracionPassword;
+        this.codigoVerificacionExpiracion = codigoVerificacionExpiracion;
     }
 
     public Long getId() {
@@ -102,6 +105,14 @@ public class Usuario implements UserDetails{
 
     public void setTokenExpiracionPassword(LocalDateTime tokenExpiracionPassword) {
         this.tokenExpiracionPassword = tokenExpiracionPassword;
+    }
+
+    public LocalDateTime getCodigoVerificacionExpiracion() {
+        return codigoVerificacionExpiracion;
+    }
+
+    public void setCodigoVerificacionExpiracion(LocalDateTime codigoVerificacionExpiracion) {
+        this.codigoVerificacionExpiracion = codigoVerificacionExpiracion;
     }
 
     @Override

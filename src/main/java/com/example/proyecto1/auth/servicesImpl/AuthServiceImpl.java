@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -38,14 +39,14 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public void registrar(RegisterPeticion request){
+    public void registrar(RegisterPeticion request) {
         String codigo = UUID.randomUUID().toString();
         Usuario usuario = new Usuario();
         usuario.setNombre(request.nombre());
         usuario.setEmail(request.email());
-        String encodedPassword = passwordEncoder.encode(request.password());
-        usuario.setPassword(encodedPassword);
+        usuario.setPassword(passwordEncoder.encode(request.password()));
         usuario.setCodigoVerificacion(codigo);
+        usuario.setCodigoVerificacionExpiracion(LocalDateTime.now().plusMinutes(15));
         usuario.setActivado(false);
         usuario.setRole(Role.USER);
         Long usuarioId = usuarioDao.insertarUsuario(usuario);
@@ -54,23 +55,23 @@ public class AuthServiceImpl implements AuthService {
         try {
             emailService.enviarEmailConfirmacion(usuario.getEmail(), codigo);
         } catch (MessagingException e) {
-            System.out.println(e.getMessage());
+            throw new RuntimeException("No se pudo enviar el correo de confirmación. Intenta de nuevo.");
         }
 
     }
 
     @Override
     @Transactional
-    public AuthResponse login (LoginPeticion request){
+    public AuthResponse login(LoginPeticion request) {
         Usuario usuario = usuarioDao.findByEmail(request.email()).orElseThrow(() ->
-            new RuntimeException("Credenciales invalidas."));
+                new RuntimeException("Credenciales invalidas."));
 
-        if(!usuario.isActivado()){
+        if (!usuario.isActivado()) {
             throw new RuntimeException("Tu cuenta no ha sido activada aún D:! Revisa tu correo: " +
                     usuario.getEmail());
         }
 
-        if(!passwordEncoder.matches(request.password(), usuario.getPassword())){
+        if (!passwordEncoder.matches(request.password(), usuario.getPassword())) {
             throw new RuntimeException("Credenciales inválidas");
         }
 
@@ -80,11 +81,15 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public boolean activarCuenta(String codigo){
+    public boolean activarCuenta(String codigo) {
         Optional<Usuario> usuarioVerificado = usuarioDao.buscarPorCodigoVerificacion(codigo);
 
-        if(usuarioVerificado.isPresent()){
+        if (usuarioVerificado.isPresent()) {
             Usuario usuario = usuarioVerificado.get();
+            if (usuario.getCodigoVerificacionExpiracion() == null ||
+                    LocalDateTime.now().isAfter(usuario.getCodigoVerificacionExpiracion())) {
+                return false;
+            }
             usuarioDao.ActivarUsuario(usuario.getId());
             return true;
         }
