@@ -3,6 +3,7 @@ package com.example.proyecto1.categorias.servicesImpl;
 import com.example.proyecto1.categorias.daos.CategoriaDao;
 import com.example.proyecto1.categorias.dtos.CategoriaPeticion;
 import com.example.proyecto1.categorias.services.CategoriaService;
+import com.example.proyecto1.exceptions.NegocioException;
 import com.example.proyecto1.usuarios.daos.UsuarioDao;
 import com.example.proyecto1.categorias.dtos.CategoriaRespuesta;
 import com.example.proyecto1.categorias.entities.Categoria;
@@ -27,7 +28,7 @@ public class CategoriaServiceImpl implements CategoriaService {
     @Transactional(readOnly = true)
     public List<CategoriaRespuesta> listarPorUsuario(String email) {
         Usuario usuario = usuarioDao.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new NegocioException("Usuario no encontrado"));
 
         List<Categoria> categoriasEntity = categoriaDao.findAllByUsuarioId(usuario.getId());
 
@@ -46,7 +47,7 @@ public class CategoriaServiceImpl implements CategoriaService {
     @Transactional
     public void crearCategoria(CategoriaPeticion peticion, String emailUsuario) {
         Usuario usuario = usuarioDao.findByEmail(emailUsuario)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new NegocioException("Usuario no encontrado"));
 
         Categoria nuevaCategoria = new Categoria();
         nuevaCategoria.setNombre(peticion.nombre());
@@ -59,14 +60,14 @@ public class CategoriaServiceImpl implements CategoriaService {
     @Transactional
     public void editarCategoria(Long id, CategoriaPeticion peticion, String emailUsuario) {
         Categoria categoria = categoriaDao.findById(id)
-                .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
+                .orElseThrow(() -> new NegocioException("Categoría no encontrada"));
 
         Usuario usuario = usuarioDao.findByEmail(emailUsuario)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new NegocioException("Usuario no encontrado"));
 
         // Validación de seguridad: solo el dueño puede editar
         if (!categoria.getUsuarioId().equals(usuario.getId())) {
-            throw new RuntimeException("No tienes permiso para editar esta categoría");
+            throw new NegocioException("No tienes permiso para editar esta categoría");
         }
 
         categoria.setNombre(peticion.nombre());
@@ -79,14 +80,14 @@ public class CategoriaServiceImpl implements CategoriaService {
     @Transactional
     public void eliminarCategoria(Long id, String emailUsuario) {
         Categoria categoria = categoriaDao.findById(id)
-                .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
+                .orElseThrow(() -> new NegocioException("Categoría no encontrada"));
 
         Usuario usuario = usuarioDao.findByEmail(emailUsuario)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new NegocioException("Usuario no encontrado"));
 
         // Validación de seguridad: solo el dueño puede eliminar
         if (!categoria.getUsuarioId().equals(usuario.getId())) {
-            throw new RuntimeException("No tienes permiso para eliminar esta categoría");
+            throw new NegocioException("No tienes permiso para eliminar esta categoría");
         }
 
         categoriaDao.eliminarCategoria(id);

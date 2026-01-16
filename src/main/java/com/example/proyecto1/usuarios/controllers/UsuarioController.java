@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/usuarios")
@@ -24,8 +25,8 @@ public class UsuarioController {
     }
 
     @PutMapping("/cambiar-password")
-    public ResponseEntity<String> cambiarPassword(
-            @RequestBody CambiarPasswordPeticion peticion,
+    public ResponseEntity<Map<String, String>> cambiarPassword(
+            @Valid @RequestBody CambiarPasswordPeticion peticion,
             Principal principal) {
 
         usuarioService.cambiarPassword(
@@ -34,19 +35,16 @@ public class UsuarioController {
                 peticion.nuevaPassword()
         );
 
-        return ResponseEntity.ok("Contraseña actualizada correctamente");
+        return ResponseEntity.ok(Map.of("mensaje","Contraseña actualizada correctamente"));
     }
 
     @GetMapping("/me")
-    public ResponseEntity<UsuarioResponse> obtenerPerfil(Principal principal){
-        String email = principal.getName();
-        return ResponseEntity.ok(usuarioService.obtenerUsuario(email));
+    public ResponseEntity<UsuarioResponse> obtenerPerfil(java.security.Principal principal) {
+        return ResponseEntity.ok(authServices.obtenerPerfil(principal.getName()));
     }
 
     @PutMapping("/me")
-    public ResponseEntity<UsuarioResponse> actualizarPerfil(@Valid @RequestBody ActualizarUsuarioPeticion request, Principal principal){
-        String email = principal.getName();
-        return ResponseEntity.ok(usuarioService.actualizarPerfil(email, request));
+    public ResponseEntity<UsuarioResponse> actualizarPerfil(@Valid @RequestBody ActualizarUsuarioPeticion request, java.security.Principal principal) {
+        return ResponseEntity.ok(authServices.actualizarPerfil(principal.getName(), request));
     }
-
 }
