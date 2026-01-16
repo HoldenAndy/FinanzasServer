@@ -43,7 +43,7 @@ public class UsuarioDaoImpl implements UsuarioDao {
 
     @Override
     public Long insertarUsuario(Usuario usuario) {
-        String sql = "INSERT INTO usuarios (email, password, nombre, role, activado, codigo_verificacion) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO usuarios (email, password, nombre, role, activado, codigo_verificacion, codigo_verificacion_expiracion) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         // Objeto para atrapar el ID autoincremental
         KeyHolder keyHolder = new GeneratedKeyHolder();
