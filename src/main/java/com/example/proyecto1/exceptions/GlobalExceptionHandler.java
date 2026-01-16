@@ -1,40 +1,51 @@
 package com.example.proyecto1.exceptions;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.HashMap;
 import java.util.Map;
 
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<?> handleDatabaseError(DataIntegrityViolationException ex) {
-        Map<String, String> error = new HashMap<>();
-        error.put("error", "Error de integridad de datos");
-        error.put("detalle", "Asegúrate de que la categoría y el usuario existan.");
-        return ResponseEntity.badRequest().body(error);
-    }
+    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<?> handleRuntimeError(RuntimeException ex) {
-        Map<String, String> error = new HashMap<>();
-        error.put("error", "Error en la operación");
-        error.put("mensaje", ex.getMessage());
-        return ResponseEntity.badRequest().body(error);
-    }
-
-    // Captura errores de validación de los DTOs (@Valid)
+    // Errores de Validaciones
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<?> handleValidationErrors(MethodArgumentNotValidException ex) {
+    public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, String> errores = new HashMap<>();
-        ex.getBindingResult().getFieldErrors().forEach(error ->
-                errores.put(error.getField(), error.getDefaultMessage())
-        );
-        return ResponseEntity.badRequest().body(errores);
+
+        ex.getBindingResult().getAllErrors().forEach((error) -> {
+            String nombreCampo = ((FieldError) error).getField();
+            String mensajeError = error.getDefaultMessage();
+            errores.put(nombreCampo, mensajeError);
+        });
+
+        return new ResponseEntity<>(errores, HttpStatus.BAD_REQUEST);
+    }
+
+    // Errores de Lógica de Negocio
+    @ExceptionHandler(NegocioException.class)
+    public ResponseEntity<Map<String, String>> manejarErroresNegocio(NegocioException ex) {
+        Map<String, String> error = new HashMap<>();
+        error.put("error", ex.getMessage());
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    //Errores Generales
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, String>> handleGeneralExceptions(Exception ex) {
+        logger.error("Error interno inesperado: ", ex);
+        Map<String, String> error = new HashMap<>();
+        error.put("error", "Ocurrió un error interno inesperado. Por favor contacta a soporte.");
+        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

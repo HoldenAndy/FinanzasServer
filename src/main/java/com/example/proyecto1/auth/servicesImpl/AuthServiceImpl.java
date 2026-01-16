@@ -4,18 +4,15 @@ import com.example.proyecto1.auth.dtos.*;
 import com.example.proyecto1.auth.services.AuthService;
 import com.example.proyecto1.categorias.daos.CategoriaDao;
 import com.example.proyecto1.email.services.EmailService;
+import com.example.proyecto1.exceptions.NegocioException;
 import com.example.proyecto1.jwt.services.JwtService;
 import com.example.proyecto1.usuarios.daos.UsuarioDao;
 import com.example.proyecto1.usuarios.entities.Role;
 import com.example.proyecto1.usuarios.entities.Usuario;
 import jakarta.mail.MessagingException;
-import jakarta.validation.Valid;
-import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -38,40 +35,50 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public void registrar(RegisterPeticion request){
+    public void registrar(RegisterPeticion request) {
+
+        if (usuarioDao.findByEmail(request.email()).isPresent()) {
+            throw new NegocioException("El correo ya está registrado");
+        }
+
         String codigo = UUID.randomUUID().toString();
         Usuario usuario = new Usuario();
         usuario.setNombre(request.nombre());
         usuario.setEmail(request.email());
+
         String encodedPassword = passwordEncoder.encode(request.password());
         usuario.setPassword(encodedPassword);
+
         usuario.setCodigoVerificacion(codigo);
         usuario.setActivado(false);
         usuario.setRole(Role.USER);
+
         Long usuarioId = usuarioDao.insertarUsuario(usuario);
         categoriaDao.insertarCategoriasPorDefecto(usuarioId);
 
         try {
             emailService.enviarEmailConfirmacion(usuario.getEmail(), codigo);
         } catch (MessagingException e) {
-            System.out.println(e.getMessage());
-        }
 
+            throw new NegocioException("Error al enviar el correo de confirmación. Inténtalo de nuevo.");
+        }
     }
 
     @Override
-    @Transactional
-    public AuthResponse login (LoginPeticion request){
-        Usuario usuario = usuarioDao.findByEmail(request.email()).orElseThrow(() ->
-            new RuntimeException("Credenciales invalidas."));
+    @Transactional(readOnly = true)
+    public AuthResponse login(LoginPeticion request) {
 
-        if(!usuario.isActivado()){
-            throw new RuntimeException("Tu cuenta no ha sido activada aún D:! Revisa tu correo: " +
-                    usuario.getEmail());
+        Usuario usuario = usuarioDao.findByEmail(request.email()).orElseThrow(() ->
+                new NegocioException("Credenciales inválidas."));
+
+
+        if (!passwordEncoder.matches(request.password(), usuario.getPassword())) {
+            throw new NegocioException("Credenciales inválidas");
         }
 
-        if(!passwordEncoder.matches(request.password(), usuario.getPassword())){
-            throw new RuntimeException("Credenciales inválidas");
+        if (!usuario.isActivado()) {
+            throw new NegocioException("Tu cuenta no ha sido activada aún D:! Revisa tu correo: " +
+                    usuario.getEmail());
         }
 
         String token = jwtService.generateToken(usuario);
@@ -80,16 +87,50 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public boolean activarCuenta(String codigo){
+    public boolean activarCuenta(String codigo) {
         Optional<Usuario> usuarioVerificado = usuarioDao.buscarPorCodigoVerificacion(codigo);
 
-        if(usuarioVerificado.isPresent()){
+        if (usuarioVerificado.isPresent()) {
             Usuario usuario = usuarioVerificado.get();
             usuarioDao.ActivarUsuario(usuario.getId());
             return true;
         }
+
         return false;
     }
 
-}
+    @Override
+    public UsuarioResponse obtenerPerfil(String email) {
+        Usuario usuario = usuarioDao.findByEmail(email)
+                .orElseThrow(() -> new NegocioException("Usuario no encontrado"));
 
+        return new UsuarioResponse(
+                usuario.getId(),
+                usuario.getNombre(),
+                usuario.getEmail(),
+                usuario.getRole().name()
+        );
+    }
+
+    @Override
+    @Transactional
+    public UsuarioResponse actualizarPerfil(String email, ActualizarUsuarioPeticion request) {
+        Usuario usuario = usuarioDao.findByEmail(email)
+                .orElseThrow(() -> new NegocioException("Usuario no encontrado"));
+
+        usuario.setNombre(request.nombre());
+
+        if (request.password() != null && !request.password().isEmpty()) {
+            usuario.setPassword(passwordEncoder.encode(request.password()));
+        }
+
+        usuarioDao.actualizarUsuario(usuario);
+
+        return new UsuarioResponse(
+                usuario.getId(),
+                usuario.getNombre(),
+                usuario.getEmail(),
+                usuario.getRole().name()
+        );
+    }
+}
