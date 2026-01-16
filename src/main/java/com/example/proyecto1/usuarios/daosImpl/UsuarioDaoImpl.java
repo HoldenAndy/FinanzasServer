@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.PreparedStatement;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -32,17 +33,17 @@ public class UsuarioDaoImpl implements UsuarioDao {
         usuario.setRole(Role.valueOf(rs.getString("role")));
         usuario.setActivado(rs.getBoolean("activado"));
         usuario.setCodigoVerificacion(rs.getString("codigo_verificacion"));
-        usuario.setTokenRecuperacionPassword(rs.getString("token_recuperacion"));
-        java.sql.Timestamp fechaExpiracion = rs.getTimestamp("token_expiracion");
-        if (fechaExpiracion != null) {
-            usuario.setTokenExpiracionPassword(fechaExpiracion.toLocalDateTime());
-        }
+        usuario.setTokenRecuperacionPassword(rs.getString("token_recuperacion_password"));
+        Timestamp fechaExpiracion = rs.getTimestamp("token_expiracion_password");
+        usuario.setTokenExpiracionPassword(fechaExpiracion != null ? fechaExpiracion.toLocalDateTime() : null);
+        Timestamp tsVerif = rs.getTimestamp("codigo_verificacion_expiracion");
+        usuario.setCodigoVerificacionExpiracion(tsVerif != null ? tsVerif.toLocalDateTime() : null);
         return usuario;
     };
 
     @Override
     public Long insertarUsuario(Usuario usuario) {
-        String sql = "INSERT INTO usuarios (email, password, nombre, role, activado, codigo_verificacion) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO usuarios (email, password, nombre, role, activado, codigo_verificacion, codigo_verificacion_expiracion) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         // Objeto para atrapar el ID autoincremental
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -55,6 +56,11 @@ public class UsuarioDaoImpl implements UsuarioDao {
             ps.setString(4, usuario.getRole().name());
             ps.setBoolean(5, usuario.isActivado());
             ps.setString(6, usuario.getCodigoVerificacion());
+            if (usuario.getCodigoVerificacionExpiracion() != null) {
+                ps.setTimestamp(7, java.sql.Timestamp.valueOf(usuario.getCodigoVerificacionExpiracion()));
+            } else {
+                ps.setNull(7, java.sql.Types.TIMESTAMP);
+            }
             return ps;
         }, keyHolder);
 
@@ -72,21 +78,22 @@ public class UsuarioDaoImpl implements UsuarioDao {
     }
 
     @Override
-    public Optional<Usuario> buscarPorCodigoVerificacion(String codigo){
+    public Optional<Usuario> buscarPorCodigoVerificacion(String codigo) {
         String sql = "SELECT * FROM usuarios WHERE codigo_verificacion = ?";
         try {
             Usuario usuario = jdbcTemplate.queryForObject(sql, usuarioRowMapper, codigo);
             return Optional.ofNullable(usuario);
-        }catch (EmptyResultDataAccessException e){
+        } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
     }
 
     @Override
-    public void ActivarUsuario(Long id){
+    public void ActivarUsuario(Long id) {
         String sql = "UPDATE usuarios SET activado = true, codigo_verificacion = NULL WHERE id = ?";
         jdbcTemplate.update(sql, id);
     }
+
     @Override
     public void actualizarUsuario(Usuario usuario) {
         String sql = "UPDATE usuarios SET nombre = ?, password = ? WHERE id = ?";
@@ -105,13 +112,13 @@ public class UsuarioDaoImpl implements UsuarioDao {
 
     @Override
     public void guardarTokenRecuperacion(String email, String token, LocalDateTime expiracion) {
-        String sql = "UPDATE usuarios SET token_recuperacion = ?, token_expiracion = ? WHERE email = ?";
+        String sql = "UPDATE usuarios SET token_recuperacion_password = ?, token_expiracion_password = ? WHERE email = ?";
         jdbcTemplate.update(sql, token, expiracion, email);
     }
 
     @Override
     public Optional<Usuario> findByTokenRecuperacion(String token) {
-        String sql = "SELECT * FROM usuarios WHERE token_recuperacion = ?";
+        String sql = "SELECT * FROM usuarios WHERE token_recuperacion_password = ?";
         try {
             Usuario u = jdbcTemplate.queryForObject(sql, usuarioRowMapper, token);
             return Optional.ofNullable(u);

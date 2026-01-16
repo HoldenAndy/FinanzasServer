@@ -9,6 +9,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Repository
@@ -70,5 +71,17 @@ public class MovimientoDaoImpl implements MovimientoDao {
                 "FROM movimientos WHERE usuario_id = ?";
 
         return jdbcTemplate.queryForObject(sql, BigDecimal.class, usuarioId);
+    }
+
+    @Override
+    public BigDecimal calcularGastoPorCategoriaYFechas(Long usuarioId, Long categoriaId, LocalDate inicio, LocalDate fin) {
+        String sql = "SELECT COALESCE(SUM(monto_base), 0) " +
+                "FROM movimientos " +
+                "WHERE usuario_id = ? " +
+                "AND categoria_id = ? " +
+                "AND tipo = 'EGRESO' " +
+                "AND fecha BETWEEN ? AND ?";
+
+        return jdbcTemplate.queryForObject(sql, BigDecimal.class, usuarioId, categoriaId, inicio, fin);
     }
 }
