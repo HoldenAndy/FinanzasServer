@@ -1,12 +1,14 @@
 package com.example.proyecto1.presupuestos.controllers;
 
 import com.example.proyecto1.presupuestos.dtos.PresupuestoPeticion;
+import com.example.proyecto1.presupuestos.dtos.PresupuestoResumen;
 import com.example.proyecto1.presupuestos.services.PresupuestoService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -27,7 +29,8 @@ public class PresupuestosController {
 
     @GetMapping
     public ResponseEntity<?> listarPresupuesto(Principal principal) {
-        return ResponseEntity.ok(presupuestoService.obtenerPresupuestosConEstado(principal.getName()));
+        List<PresupuestoResumen> presupuestosConEstado = presupuestoService.obtenerPresupuestosConEstado(principal.getName());
+        return ResponseEntity.ok(Map.of("mensaje", presupuestosConEstado));
     }
 
     @DeleteMapping("/{id}")
