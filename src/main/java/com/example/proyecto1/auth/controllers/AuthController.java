@@ -25,11 +25,15 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<Map<String, String>> registrarUsuario(@Valid @RequestBody RegisterPeticion request){
+    public ResponseEntity<Map<String, String>> registrarUsuario(@Valid @RequestBody RegisterPeticion request){ // Cambia String por Map
+        try {
             authServices.registrar(request);
             Map<String, String> respuesta = new HashMap<>();
             respuesta.put("mensaje", "Registro de usuario éxitoso!");
             return ResponseEntity.ok(respuesta);
+        } catch (Exception e){
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
     @PostMapping("/login")

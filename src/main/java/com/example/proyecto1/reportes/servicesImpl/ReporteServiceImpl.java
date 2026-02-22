@@ -2,7 +2,9 @@ package com.example.proyecto1.reportes.servicesImpl;
 
 import com.example.proyecto1.movimientos.daos.MovimientoDao;
 import com.example.proyecto1.movimientos.entities.TipoMovimiento;
+import com.example.proyecto1.reportes.dtos.ReporteBalanceDTO;
 import com.example.proyecto1.reportes.dtos.ReporteCategoriaDTO;
+import com.example.proyecto1.reportes.dtos.ReporteMensualDTO;
 import com.example.proyecto1.reportes.services.ReporteService;
 import com.example.proyecto1.usuarios.daos.UsuarioDao;
 import com.example.proyecto1.usuarios.entities.Usuario;
@@ -37,4 +39,28 @@ public class ReporteServiceImpl implements ReporteService {
 
         return movimientoDao.obtenerDistribucionPorCategoria(usuario.getId(), inicio, fin, tipo);
     }
+
+    @Override
+    public ReporteBalanceDTO obtenerBalance(String email, LocalDate inicio, LocalDate fin) {
+        Usuario usuario = usuarioDao.findByEmail(email).orElseThrow();
+        if (inicio == null || fin == null) {
+            LocalDate hoy = LocalDate.now();
+            inicio = hoy.with(java.time.temporal.TemporalAdjusters.firstDayOfMonth());
+            fin = hoy.with(java.time.temporal.TemporalAdjusters.lastDayOfMonth());
+        }
+        return movimientoDao.obtenerBalanceGeneral(usuario.getId(), inicio, fin);
+    }
+
+    @Override
+    public List<ReporteMensualDTO> obtenerHistorial(String email) {
+        Usuario usuario = usuarioDao.findByEmail(email).orElseThrow();
+        return movimientoDao.obtenerHistorialUltimos6Meses(usuario.getId());
+    }
+
+    @Override
+    public List<ReporteMensualDTO> obtenerDiario(String email, int anio, int mes) {
+        Usuario usuario = usuarioDao.findByEmail(email).orElseThrow();
+        return movimientoDao.obtenerGastosDiarios(usuario.getId(), anio, mes);
+    }
+
 }
