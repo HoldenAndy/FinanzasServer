@@ -72,4 +72,17 @@ public class MovimientoServiceImpl implements MovimientoService {
 
         return resumen;
     }
+
+    @Transactional
+    @Override
+    public void eliminarMovimiento(Long id, String email) {
+        Usuario usuario = usuarioDao.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        boolean borrado = movimientoDao.eliminarMovimiento(id, usuario.getId());
+
+        if (!borrado) {
+            throw new RuntimeException("Movimiento no encontrado o no tienes permiso para eliminarlo");
+        }
+    }
 }
