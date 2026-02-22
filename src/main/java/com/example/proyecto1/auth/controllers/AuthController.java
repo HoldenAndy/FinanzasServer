@@ -38,12 +38,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> loguearUsuario(@Valid @RequestBody LoginPeticion loginPeticion){
-        try {
-            AuthResponse token = authServices.login(loginPeticion);
-            return ResponseEntity.ok(token);
-        }catch (Exception e){
-            return ResponseEntity.status(401).body(e.getMessage());
-        }
+        return ResponseEntity.ok(authServices.login(loginPeticion));
     }
 
     @GetMapping(value = "/confirmar", produces = "text/html;charset=UTF-8")
@@ -58,14 +53,15 @@ public class AuthController {
     }
 
     @PostMapping("/solicitar-recuperacion")
-    public ResponseEntity<String> solicitarRecuperacion(@RequestBody SolicitarRecuperacionPeticion peticion) {
+    public ResponseEntity<Map<String,String>> solicitarRecuperacion(@Valid @RequestBody SolicitarRecuperacionPeticion peticion) {
         usuarioService.solicitarRecuperacion(peticion.email());
-        return ResponseEntity.ok("Te hemos enviado instrucciones al correo, por favor revisalo.");
+        return ResponseEntity.ok((Map.of("mensaje","Te hemos enviado instrucciones al correo, por favor revisalo.")));
     }
 
     @PostMapping("/restablecer-password")
-    public ResponseEntity<String> restablecerPassword(@RequestBody RestablecerPasswordPeticion peticion) {
+    public ResponseEntity<Map<String, String>> restablecerPassword(@Valid @RequestBody RestablecerPasswordPeticion peticion
+    ) {
         usuarioService.restablecerPassword(peticion.token(), peticion.nuevaPassword());
-        return ResponseEntity.ok("Contraseña restablecida con éxito. Ya puedes iniciar sesión.");
+        return ResponseEntity.ok(Map.of("mensaje", "Contraseña restablecida con éxito. Ya puedes iniciar sesión."));
     }
 }

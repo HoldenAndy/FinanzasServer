@@ -1,6 +1,7 @@
 package com.example.proyecto1.currencies.servicesImpl;
 
 import com.example.proyecto1.currencies.services.CurrencyService;
+import com.example.proyecto1.exceptions.NegocioException;
 import com.example.proyecto1.movimientos.dtos.ExchangeRateResponse;
 import com.example.proyecto1.movimientos.entities.Moneda;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,7 +39,7 @@ public class CurrencyServiceImpl implements CurrencyService {
                 return monto.multiply(tasa).setScale(2, RoundingMode.HALF_UP);
             }
         } catch (Exception e) {
-            throw new RuntimeException("Error en conversión: " + e.getMessage());
+            throw new NegocioException("Error en conversión: " + e.getMessage());
         }
         return monto;
     }
